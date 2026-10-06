@@ -22,8 +22,28 @@ export default function DailyReaderPage() {
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
   const fetchArticle = useCallback(async (selectedCat: "education" | "technology" | "environment", force = false) => {
-    setIsLoading(true);
     setErrorNotice(null);
+    const today = new Date().toISOString().split("T")[0];
+    const cacheStorageKey = `eng_cefr_daily_article_${selectedCat}`;
+
+    // 1. Check local browser cache if not forcing refresh
+    if (!force && typeof window !== "undefined") {
+      try {
+        const localCachedRaw = localStorage.getItem(cacheStorageKey);
+        if (localCachedRaw) {
+          const parsed = JSON.parse(localCachedRaw);
+          if (parsed && (parsed.date === today || parsed.id)) {
+            setArticle(parsed);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback to fetch
+      }
+    }
+
+    setIsLoading(true);
 
     try {
       let customApiKey = "";
@@ -49,17 +69,24 @@ export default function DailyReaderPage() {
       const data = await res.json();
       if (data.success && data.article) {
         setArticle(data.article);
+        try {
+          localStorage.setItem(cacheStorageKey, JSON.stringify(data.article));
+        } catch {
+          // Ignore cache save error
+        }
         if (data.notice) {
           setErrorNotice(data.notice);
         }
       } else {
         // Fallback to sample article
-        setArticle(DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education);
+        const fallback = DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education;
+        setArticle(fallback);
         setErrorNotice(data.error || "เกิดข้อผิดพลาด จึงแสดงบทความตัวอย่างสำหรับการฝึก");
       }
     } catch (err) {
       console.error("[DailyReaderPage] Fetch error:", err);
-      setArticle(DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education);
+      const fallback = DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education;
+      setArticle(fallback);
       setErrorNotice("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ จึงแสดงบทความตัวอย่างสำหรับการฝึก");
     } finally {
       setIsLoading(false);
@@ -123,7 +150,6 @@ export default function DailyReaderPage() {
           selectedCategory={category}
           onSelectCategory={(cat) => {
             setCategory(cat);
-            fetchArticle(cat, false);
           }}
           onRefresh={() => fetchArticle(category, true)}
           isLoading={isLoading}

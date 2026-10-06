@@ -22,6 +22,7 @@ interface VocabListProps {
 export function VocabList({ items, onRefresh, onStartReview }: VocabListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<"all" | "due" | "B1" | "B2" | "C1">("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -38,10 +39,19 @@ export function VocabList({ items, onRefresh, onStartReview }: VocabListProps) {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("คุณต้องการลบคำศัพท์นี้ออกจากคลังหรือไม่?")) {
-      removeVocabItem(id);
-      onRefresh();
-    }
+    setConfirmDeleteId(id);
+  };
+
+  const handleConfirmDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeVocabItem(id);
+    setConfirmDeleteId(null);
+    onRefresh();
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmDeleteId(null);
   };
 
   const handleSeed = () => {
@@ -158,13 +168,31 @@ export function VocabList({ items, onRefresh, onStartReview }: VocabListProps) {
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                       CEFR {item.cefrLevel}
                     </span>
-                    <button
-                      onClick={(e) => handleDelete(item.id, e)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100"
-                      title="ลบคำศัพท์"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {confirmDeleteId === item.id ? (
+                      <div className="flex items-center gap-1.5 bg-rose-950/90 border border-rose-500/50 px-2 py-1 rounded-xl text-xs text-rose-200 animate-fadeIn shadow-sm">
+                        <span>ลบ?</span>
+                        <button
+                          onClick={(e) => handleConfirmDelete(item.id, e)}
+                          className="px-2 py-0.5 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-bold transition-colors"
+                        >
+                          ใช่
+                        </button>
+                        <button
+                          onClick={handleCancelDelete}
+                          className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                        >
+                          ยกเลิก
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => handleDelete(item.id, e)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        title="ลบคำศัพท์"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

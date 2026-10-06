@@ -76,6 +76,34 @@ export function removeVocabItem(id: string): void {
   const filtered = currentList.filter((item) => item.id !== id);
   localStorage.setItem(VOCAB_STORAGE_KEY, JSON.stringify(filtered));
   window.dispatchEvent(new Event("vocabBankUpdated"));
+
+  // Also remove from Supabase cloud if connected
+  try {
+    const sbUrl = (
+      localStorage.getItem("eng_cefr_supabase_url") ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      ""
+    ).trim();
+    const sbKey = (
+      localStorage.getItem("eng_cefr_supabase_key") ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      ""
+    ).trim();
+
+    if (sbUrl && sbKey) {
+      fetch(`${sbUrl.replace(/\/$/, "")}/rest/v1/vocab_bank?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          apikey: sbKey,
+          Authorization: `Bearer ${sbKey}`,
+        },
+      }).catch((err) => {
+        console.warn("[Vocab Storage] Supabase delete warning:", err);
+      });
+    }
+  } catch {
+    // Ignore background delete error
+  }
 }
 
 export function reviewVocabItem(
