@@ -33,6 +33,21 @@ export default function DailyReaderPage() {
         if (localCachedRaw) {
           const parsed = JSON.parse(localCachedRaw);
           if (parsed && (parsed.date === today || parsed.id)) {
+            // Auto-heal: if missing Thai paragraphs and title matches demo, hydrate from preset demo
+            const demoPreset = DEMO_SAMPLE_ARTICLES[selectedCat];
+            if (
+              !parsed.paragraphsTh &&
+              demoPreset &&
+              parsed.title?.toLowerCase() === demoPreset.title.toLowerCase()
+            ) {
+              parsed.paragraphsTh = demoPreset.paragraphsTh;
+              parsed.titleTh = demoPreset.titleTh;
+              try {
+                localStorage.setItem(cacheStorageKey, JSON.stringify(parsed));
+              } catch {
+                // Ignore
+              }
+            }
             setArticle(parsed);
             setIsLoading(false);
             return;

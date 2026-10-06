@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DailyArticle, TargetVocabulary } from "@/types/news";
 import { AudioPlayer } from "./AudioPlayer";
 import { WordPopover } from "./WordPopover";
 import { ComprehensionQuiz } from "./ComprehensionQuiz";
+import { DEMO_SAMPLE_ARTICLES } from "@/lib/storage/articleCache";
 import {
   Calendar,
   Layers,
@@ -16,6 +17,8 @@ import {
   Volume2,
   CheckCircle,
   Languages,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { saveVocabItem } from "@/lib/storage/vocabStorage";
 
@@ -42,9 +45,100 @@ export function InteractiveReader({
   const [savedAllSuccess, setSavedAllSuccess] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
   const [showBilingual, setShowBilingual] = useState(false);
+  const [paragraphsTh, setParagraphsTh] = useState<string[] | undefined>(article.paragraphsTh);
+  const [titleTh, setTitleTh] = useState<string | undefined>(article.titleTh);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
 
   // Active category: user selection has priority over article metadata
   const currentCategory = selectedCategory || article.category;
+
+  const activeTitleTh = titleTh || article.titleTh;
+  const activeParagraphsTh = paragraphsTh || article.paragraphsTh;
+
+  useEffect(() => {
+    if (article.paragraphsTh && article.paragraphsTh.length > 0) {
+      setParagraphsTh(article.paragraphsTh);
+      setTitleTh(article.titleTh);
+    } else {
+      const preset = DEMO_SAMPLE_ARTICLES[currentCategory];
+      if (preset?.paragraphsTh && preset.title.toLowerCase() === article.title.toLowerCase()) {
+        setParagraphsTh(preset.paragraphsTh);
+        setTitleTh(preset.titleTh);
+      } else {
+        setParagraphsTh(undefined);
+        setTitleTh(undefined);
+      }
+    }
+    setTranslateError(null);
+  }, [article, currentCategory]);
+
+  const handleToggleBilingual = async () => {
+    if (showBilingual) {
+      setShowBilingual(false);
+      return;
+    }
+
+    // If already translated, show immediately
+    if (activeParagraphsTh && activeParagraphsTh.length > 0) {
+      setShowBilingual(true);
+      return;
+    }
+
+    const preset = DEMO_SAMPLE_ARTICLES[currentCategory];
+    if (preset?.paragraphsTh && preset.title.toLowerCase() === article.title.toLowerCase()) {
+      setParagraphsTh(preset.paragraphsTh);
+      setTitleTh(preset.titleTh);
+      setShowBilingual(true);
+      return;
+    }
+
+    // Need to fetch translation from API
+    setShowBilingual(true);
+    setIsTranslating(true);
+    setTranslateError(null);
+
+    try {
+      let customApiKey = "";
+      try {
+        customApiKey = localStorage.getItem("eng_cefr_gemini_api_key") || "";
+      } catch {}
+
+      const res = await fetch("/api/translate-article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: article.title,
+          paragraphs: article.paragraphs,
+          category: currentCategory,
+          userApiKey: customApiKey || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.paragraphsTh) {
+        setParagraphsTh(data.paragraphsTh);
+        setTitleTh(data.titleTh);
+
+        try {
+          const cacheKey = `eng_cefr_daily_article_${currentCategory}`;
+          const updated = {
+            ...article,
+            titleTh: data.titleTh,
+            paragraphsTh: data.paragraphsTh,
+          };
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        } catch {}
+      } else {
+        setTranslateError(data.error || "ไม่สามารถแปลภาษาได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง");
+      }
+    } catch (err) {
+      console.error("[InteractiveReader] Translation error:", err);
+      setTranslateError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์แปลภาษาได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   // Normalize vocab list for quick matching
   const vocabMap = new Map<string, TargetVocabulary>();
@@ -130,7 +224,8 @@ export function InteractiveReader({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowBilingual(!showBilingual)}
+            onClick={handleToggleBilingual}
+            disabled={isTranslating}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
               showBilingual
                 ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20"
@@ -138,8 +233,18 @@ export function InteractiveReader({
             }`}
             title="เปิด/ปิด คำแปลภาษาไทยประกบคู่ใต้แต่ละย่อหน้า"
           >
-            <Languages className={`w-3.5 h-3.5 ${showBilingual ? "text-white" : "text-indigo-400"}`} />
-            <span>{showBilingual ? "ซ่อนคำแปลไทย" : "แปลข่าวไทย (ประกบคู่)"}</span>
+            {isTranslating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+            ) : (
+              <Languages className={`w-3.5 h-3.5 ${showBilingual ? "text-white" : "text-indigo-400"}`} />
+            )}
+            <span>
+              {isTranslating
+                ? "กำลังแปลเนื้อหา..."
+                : showBilingual
+                ? "ซ่อนคำแปลไทย"
+                : "แปลข่าวไทย (ประกบคู่)"}
+            </span>
           </button>
 
           <button
@@ -158,6 +263,21 @@ export function InteractiveReader({
         <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0 text-blue-400" />
           <span>{notice}</span>
+        </div>
+      )}
+
+      {translateError && (
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>{translateError}</span>
+          </div>
+          <button
+            onClick={handleToggleBilingual}
+            className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-200 text-xs font-medium transition-colors shrink-0"
+          >
+            ลองแปลอีกครั้ง
+          </button>
         </div>
       )}
 
@@ -190,10 +310,17 @@ export function InteractiveReader({
           {article.title}
         </h1>
 
-        {showBilingual && article.titleTh && (
-          <h2 className="text-lg sm:text-xl font-bold text-indigo-300 leading-snug animate-fadeIn flex items-center gap-2">
-            <span>🇹🇭 {article.titleTh}</span>
-          </h2>
+        {showBilingual && (
+          activeTitleTh ? (
+            <h2 className="text-lg sm:text-xl font-bold text-indigo-300 leading-snug animate-fadeIn flex items-center gap-2">
+              <span>🇹🇭 {activeTitleTh}</span>
+            </h2>
+          ) : isTranslating ? (
+            <div className="flex items-center gap-2 text-indigo-400 text-sm animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>กำลังแปลชื่อบทความเป็นภาษาไทย...</span>
+            </div>
+          ) : null
         )}
 
         <p className="text-xs sm:text-sm text-slate-400 italic">
@@ -258,13 +385,20 @@ export function InteractiveReader({
                 })}
               </p>
 
-              {showBilingual && article.paragraphsTh?.[pIdx] && (
-                <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/25 text-indigo-200 text-sm leading-relaxed animate-fadeIn">
-                  <span className="font-semibold text-indigo-400 block mb-1 text-[11px] uppercase tracking-wider select-none">
-                    🇹🇭 คำแปลไทย:
-                  </span>
-                  {article.paragraphsTh[pIdx]}
-                </div>
+              {showBilingual && (
+                activeParagraphsTh?.[pIdx] ? (
+                  <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/25 text-indigo-200 text-sm leading-relaxed animate-fadeIn">
+                    <span className="font-semibold text-indigo-400 block mb-1 text-[11px] uppercase tracking-wider select-none">
+                      🇹🇭 คำแปลไทย:
+                    </span>
+                    {activeParagraphsTh[pIdx]}
+                  </div>
+                ) : isTranslating ? (
+                  <div className="p-3 rounded-2xl bg-indigo-950/20 border border-indigo-500/20 text-indigo-300 text-xs flex items-center gap-2 animate-pulse">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                    <span>กำลังแปลย่อหน้านี้...</span>
+                  </div>
+                ) : null
               )}
             </div>
           );
