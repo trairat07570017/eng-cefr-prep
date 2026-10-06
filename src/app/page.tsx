@@ -1,150 +1,142 @@
-import React from "react";
-import Link from "next/link";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { DailyArticle } from "@/types/news";
+import { InteractiveReader } from "@/components/reader/InteractiveReader";
+import { DEMO_SAMPLE_ARTICLES } from "@/lib/storage/articleCache";
 import {
   Newspaper,
+  Loader2,
+  AlertCircle,
+  Sparkles,
   BookOpenCheck,
   PenTool,
-  BookMarked,
-  Sparkles,
   ArrowRight,
-  Clock,
-  Award,
-  Calendar,
 } from "lucide-react";
+import Link from "next/link";
 
-export default function HomePage() {
+export default function DailyReaderPage() {
+  const [article, setArticle] = useState<DailyArticle | null>(null);
+  const [category, setCategory] = useState<"education" | "technology" | "environment">("education");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
+
+  const fetchArticle = useCallback(async (selectedCat: "education" | "technology" | "environment", force = false) => {
+    setIsLoading(true);
+    setErrorNotice(null);
+
+    try {
+      let customApiKey = "";
+      let targetLevel = "B2";
+      try {
+        customApiKey = localStorage.getItem("eng_cefr_gemini_api_key") || "";
+        targetLevel = localStorage.getItem("eng_cefr_target_level") || "B2";
+      } catch {
+        // LocalStorage fallback
+      }
+
+      const res = await fetch("/api/daily-news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: selectedCat,
+          targetLevel,
+          userApiKey: customApiKey || undefined,
+          forceRefresh: force,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.article) {
+        setArticle(data.article);
+        if (data.notice) {
+          setErrorNotice(data.notice);
+        }
+      } else {
+        // Fallback to sample article
+        setArticle(DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education);
+        setErrorNotice(data.error || "เกิดข้อผิดพลาด จึงแสดงบทความตัวอย่างสำหรับการฝึก");
+      }
+    } catch (err) {
+      console.error("[DailyReaderPage] Fetch error:", err);
+      setArticle(DEMO_SAMPLE_ARTICLES[selectedCat] || DEMO_SAMPLE_ARTICLES.education);
+      setErrorNotice("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ จึงแสดงบทความตัวอย่างสำหรับการฝึก");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchArticle(category, false);
+  }, [category, fetchArticle]);
+
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900/40 via-indigo-900/30 to-slate-900 border border-blue-500/20 p-6 md:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>เส้นทาง 1 ปี สู่การลดระยะเวลาวิทยฐานะ ว.PA</span>
+    <div className="space-y-8">
+      {/* Top Welcome Quick Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold mb-1 border border-blue-500/20">
+            <Sparkles className="w-3 h-3" />
+            <span>ภารกิจรายวัน 20–30 นาที</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
-            พัฒนาภาษาอังกฤษทุกวัน ก้าวสู่เกณฑ์{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-teal-300">
-              CEFR B2 / C1
-            </span>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Newspaper className="w-6 h-6 text-blue-400" />
+            <span>อ่านข่าวภาษาอังกฤษประจำวัน (Daily Reader)</span>
           </h1>
-          <p className="mt-3 text-slate-300 text-sm md:text-base leading-relaxed">
-            อ่านข่าวจริงที่ Gemini ย่อยให้ตรงระดับคำศัพท์ B1–B2 สะสมคำศัพท์ลงคลัง
-            และฝึกทำข้อสอบจำลอง EduSynch 4 ทักษะเพื่อพิชิตคะแนนตามเกณฑ์ ก.ค.ศ.
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+            ข่าวจริงย่อยเป็นระดับ B1–B2 แตะคำศัพท์เพื่อดูคำแปล และกดฟังเสียงอ่านได้ทันที
           </p>
+        </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium text-sm shadow-lg shadow-blue-500/25 hover:from-blue-500 hover:to-indigo-500 transition-all hover:scale-[1.02]"
-            >
-              <Newspaper className="w-4 h-4" />
-              <span>อ่านข่าวประจำวันนี้</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/writing"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-200 font-medium text-sm hover:bg-slate-800 transition-all"
-            >
-              <PenTool className="w-4 h-4 text-blue-400" />
-              <span>ฝึกเขียน Essay (EduSynch)</span>
-            </Link>
-          </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/vocab"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+          >
+            <BookOpenCheck className="w-3.5 h-3.5 text-indigo-400" />
+            <span>คลังคำศัพท์</span>
+          </Link>
+          <Link
+            href="/writing"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+          >
+            <PenTool className="w-3.5 h-3.5 text-violet-400" />
+            <span>ห้องฝึกเขียน</span>
+          </Link>
         </div>
       </div>
 
-      {/* 3 Core Quick Access Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Daily Reading */}
-        <Link
-          href="/"
-          className="group p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:border-blue-500/40 hover:bg-slate-900/80 transition-all flex flex-col justify-between"
-        >
+      {/* Main Interactive Reader View or Loading Skeleton */}
+      {isLoading && !article ? (
+        <div className="p-16 rounded-3xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center text-center space-y-4 max-w-lg mx-auto">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
           <div>
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Newspaper className="w-5 h-5" />
-            </div>
-            <h3 className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors">
-              Daily Article Reader
-            </h3>
-            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-              ข่าวคัดสรร 1-2 เรื่องต่อวัน ปรับระดับ CEFR พร้อมแตะดูคำแปลและฟังเสียงอ่าน
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-blue-400 font-medium">
-            <span>เข้าสู่การอ่าน</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </Link>
-
-        {/* Card 2: Vocabulary Bank */}
-        <Link
-          href="/vocab"
-          className="group p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all flex flex-col justify-between"
-        >
-          <div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <BookOpenCheck className="w-5 h-5" />
-            </div>
-            <h3 className="font-semibold text-white text-base group-hover:text-indigo-400 transition-colors">
-              Vocabulary Bank & SRS
-            </h3>
-            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-              คลังคำศัพท์ที่บันทึกไว้ พร้อมระบบ Flashcards ทบทวนตามระยะเวลาจำฝังแน่น
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-indigo-400 font-medium">
-            <span>ทบทวนคำศัพท์</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </Link>
-
-        {/* Card 3: EduSynch Writing Sandbox */}
-        <Link
-          href="/writing"
-          className="group p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:border-violet-500/40 hover:bg-slate-900/80 transition-all flex flex-col justify-between"
-        >
-          <div>
-            <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <PenTool className="w-5 h-5" />
-            </div>
-            <h3 className="font-semibold text-white text-base group-hover:text-violet-400 transition-colors">
-              Writing Sandbox
-            </h3>
-            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-              จำลองสอบเขียน 20 นาที 150 คำ ตรวจด้วย AI ให้คะแนนตามเกณฑ์ CEFR ทันที
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-violet-400 font-medium">
-            <span>เริ่มเขียนบทความ</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </Link>
-      </div>
-
-      {/* Accreditation Reduction Info Banner */}
-      <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
-            <Award className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-slate-200 text-sm">
-              เกณฑ์ ก.ค.ศ. ลดระยะเวลาการดำรงตำแหน่ง/วิทยฐานะ (4 ปี เหลือ 3 ปี)
-            </h4>
-            <p className="text-slate-400 text-xs mt-0.5">
-              ครูผู้สอนทั่วไป: ต้องได้ผลสอบ <strong className="text-amber-300">สูงกว่าระดับ B1 (คือ B2 ขึ้นไป)</strong> |
-              ครูภาษาอังกฤษ: ต้องได้ <strong className="text-amber-300">สูงกว่าระดับ B2 (คือ C1 ขึ้นไป)</strong>
+            <h3 className="font-semibold text-white text-base">กำลังโหลดและจัดเตรียมข่าวประจำวัน...</h3>
+            <p className="text-xs text-slate-400 mt-1">
+              ระบบกำลังดึงข้อมูลจาก RSS และแปลงเนื้อหาให้ตรงกับกรอบมาตรฐาน CEFR
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0">
-          <Clock className="w-4 h-4 text-blue-400" />
-          <span>ผลสอบมีอายุ 2 ปี</span>
+      ) : article ? (
+        <InteractiveReader
+          article={article}
+          onSelectCategory={(cat) => setCategory(cat)}
+          onRefresh={() => fetchArticle(category, true)}
+          isLoading={isLoading}
+          notice={errorNotice || undefined}
+        />
+      ) : (
+        <div className="p-12 rounded-3xl bg-slate-900/40 border border-slate-800 text-center">
+          <AlertCircle className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+          <p className="text-slate-300 text-sm">ไม่พบบทความ กรุณากดลองใหม่อีกครั้ง</p>
+          <button
+            onClick={() => fetchArticle(category, true)}
+            className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-medium"
+          >
+            ลองใหม่อีกครั้ง
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
