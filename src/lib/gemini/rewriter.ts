@@ -1,4 +1,4 @@
-import { getGeminiClient } from "./client";
+import { getGeminiClient, generateContentWithFallback } from "./client";
 import { RawNewsItem } from "../rss/fetcher";
 import { DailyArticle, TargetVocabulary, ComprehensionQuestion } from "@/types/news";
 
@@ -67,8 +67,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown formattin
   ]
 }`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
+  const response = await generateContentWithFallback(ai, {
     contents: prompt,
     config: {
       temperature: 0.3,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiClient } from "@/lib/gemini/client";
+import { getGeminiClient, generateContentWithFallback } from "@/lib/gemini/client";
 import { TargetVocabulary } from "@/types/news";
 
 // Built-in rapid dictionary for common words encountered in news
@@ -132,8 +132,7 @@ Return ONLY a JSON object:
   "cefrLevel": "B1 or B2 or C1"
 }`;
 
-        const response = await ai.models.generateContent({
-          model: "gemini-3.8-flash",
+        const response = await generateContentWithFallback(ai, {
           contents: prompt,
           config: {
             temperature: 0.2,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiClient } from "@/lib/gemini/client";
+import { getGeminiClient, generateContentWithFallback } from "@/lib/gemini/client";
 import { WritingEvaluation } from "@/types/writing";
 
 export async function POST(request: NextRequest) {
@@ -135,8 +135,7 @@ Return ONLY a valid JSON object matching this schema (no markdown backticks):
   "summaryFeedbackTh": "ข้อความสรุปและคำแนะนำในการพัฒนาภาษาไทย"
 }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateContentWithFallback(ai, {
       contents: prompt,
       config: {
         temperature: 0.2,

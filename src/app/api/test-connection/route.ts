@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { generateContentWithFallback } from "@/lib/gemini/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+    const response = await generateContentWithFallback(ai, {
       contents: "Respond with the word 'OK' only.",
     });
 
