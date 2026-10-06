@@ -5,7 +5,7 @@ export interface TargetVocabulary {
   definitionTh: string;
   definitionEn: string;
   exampleSentence: string;
-  cefrLevel: "B1" | "B2" | "C1";
+  cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 }
 
 export interface ComprehensionQuestion {

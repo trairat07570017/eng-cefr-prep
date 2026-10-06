@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { TargetVocabulary } from "@/types/news";
 import { saveVocabItem, isWordSaved } from "@/lib/storage/vocabStorage";
-import { Volume2, Bookmark, Check, X, Sparkles, BookOpen } from "lucide-react";
+import { Volume2, Bookmark, Check, X, Sparkles, BookOpen, Loader2 } from "lucide-react";
 
 interface WordPopoverProps {
   word: string;
@@ -18,11 +18,44 @@ export function WordPopover({
   sourceArticleTitle,
   onClose,
 }: WordPopoverProps) {
+  const [vocabData, setVocabData] = useState<TargetVocabulary | undefined>(matchedVocab);
+  const [isLoadingLookup, setIsLoadingLookup] = useState<boolean>(!matchedVocab);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     setSaved(isWordSaved(word));
-  }, [word]);
+
+    if (matchedVocab) {
+      setVocabData(matchedVocab);
+      setIsLoadingLookup(false);
+    } else {
+      // Dynamic lookup for any clicked word!
+      setIsLoadingLookup(true);
+      let userKey = "";
+      try {
+        userKey = localStorage.getItem("eng_cefr_gemini_api_key") || "";
+      } catch {
+        // Fallback
+      }
+
+      fetch("/api/lookup-word", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word,
+          userApiKey: userKey || undefined,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.vocab) {
+            setVocabData(data.vocab);
+          }
+        })
+        .catch((err) => console.warn("[Lookup Error]:", err))
+        .finally(() => setIsLoadingLookup(false));
+    }
+  }, [word, matchedVocab]);
 
   const handleSpeak = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -35,16 +68,8 @@ export function WordPopover({
   };
 
   const handleSave = () => {
-    const vocabToSave: TargetVocabulary = matchedVocab || {
-      word: word.toLowerCase(),
-      partOfSpeech: "vocabulary",
-      definitionTh: "คำศัพท์จากบทความประจำวัน (กดทบทวนเพื่อเรียนรู้เพิ่มเติม)",
-      definitionEn: "Word encountered in daily reading article",
-      exampleSentence: `Extracted from: ${sourceArticleTitle || "Daily Article"}`,
-      cefrLevel: "B2",
-    };
-
-    saveVocabItem(vocabToSave, sourceArticleTitle);
+    if (!vocabData) return;
+    saveVocabItem(vocabData, sourceArticleTitle);
     setSaved(true);
   };
 
@@ -71,9 +96,9 @@ export function WordPopover({
           </div>
 
           <div className="flex items-center gap-2">
-            {matchedVocab?.cefrLevel && (
+            {vocabData?.cefrLevel && (
               <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                CEFR {matchedVocab.cefrLevel}
+                CEFR {vocabData.cefrLevel}
               </span>
             )}
             <button
@@ -87,40 +112,47 @@ export function WordPopover({
 
         {/* Phonetic & Part of speech */}
         <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-          {matchedVocab?.phonetic && <span>{matchedVocab.phonetic}</span>}
-          {matchedVocab?.partOfSpeech && (
+          {vocabData?.phonetic && <span>{vocabData.phonetic}</span>}
+          {vocabData?.partOfSpeech && (
             <span className="italic px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
-              {matchedVocab.partOfSpeech}
+              {vocabData.partOfSpeech}
             </span>
           )}
         </div>
 
-        {/* Definitions */}
-        {matchedVocab ? (
+        {/* Definitions & Translation */}
+        {isLoadingLookup ? (
+          <div className="p-8 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-center gap-2.5 text-xs text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+            <span>กำลังค้นหาคำแปลภาษาไทย...</span>
+          </div>
+        ) : vocabData ? (
           <div className="space-y-2.5 text-sm">
-            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span className="text-xs text-blue-400 font-semibold block mb-0.5">
-                ความหมาย (ภาษาไทย)
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+              <span className="text-[11px] text-blue-400 font-semibold uppercase tracking-wider block">
+                ความหมายภาษาไทย
               </span>
-              <p className="text-slate-200 font-medium">{matchedVocab.definitionTh}</p>
+              <p className="text-slate-100 font-bold text-base">{vocabData.definitionTh}</p>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span className="text-xs text-slate-400 font-semibold block mb-0.5">
-                English Definition
-              </span>
-              <p className="text-slate-300 text-xs leading-relaxed">
-                {matchedVocab.definitionEn}
-              </p>
-            </div>
+            {vocabData.definitionEn && (
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span className="text-[11px] text-slate-400 font-semibold uppercase block">
+                  English Definition
+                </span>
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  {vocabData.definitionEn}
+                </p>
+              </div>
+            )}
 
-            {matchedVocab.exampleSentence && (
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-xs text-slate-400 font-semibold block mb-0.5">
-                  ตัวอย่างประโยคในบริบท
+            {vocabData.exampleSentence && (
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-0.5">
+                <span className="text-[11px] text-slate-400 font-semibold uppercase block">
+                  ตัวอย่างประโยค
                 </span>
                 <p className="text-slate-300 text-xs italic leading-relaxed">
-                  &ldquo;{matchedVocab.exampleSentence}&rdquo;
+                  &ldquo;{vocabData.exampleSentence}&rdquo;
                 </p>
               </div>
             )}
@@ -132,7 +164,7 @@ export function WordPopover({
               <span>คำศัพท์ในบทความ</span>
             </div>
             <p className="text-slate-400 leading-relaxed">
-              คำนี้สามารถบันทึกลงคลังคำศัพท์ (Vocabulary Bank) เพื่อนำไปทบทวนในระบบ Flashcards ของคุณได้ทันที
+              สามารถบันทึกคำนี้ลงคลังคำศัพท์ (Vocabulary Bank) เพื่อนำไปทบทวนได้ทันที
             </p>
           </div>
         )}
@@ -141,7 +173,7 @@ export function WordPopover({
         <div className="pt-2">
           <button
             onClick={handleSave}
-            disabled={saved}
+            disabled={saved || isLoadingLookup}
             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
               saved
                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"

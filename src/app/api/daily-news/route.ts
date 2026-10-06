@@ -5,9 +5,10 @@ import { getCachedArticle, setCachedArticle, DEMO_SAMPLE_ARTICLES } from "@/lib/
 import { DailyArticle } from "@/types/news";
 
 export async function GET(request: NextRequest) {
+  let category: "education" | "technology" | "environment" | "general" = "education";
   try {
     const { searchParams } = new URL(request.url);
-    const category = (searchParams.get("category") || "education") as "education" | "technology" | "environment" | "general";
+    category = (searchParams.get("category") || "education") as "education" | "technology" | "environment" | "general";
     const level = (searchParams.get("level") || "B2") as "B1" | "B2";
     const today = new Date().toISOString().split("T")[0];
 
@@ -40,11 +41,11 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการดึงข่าว";
     console.error("[API daily-news GET Error]:", error);
 
-    // Fallback to sample article on error
-    const fallback = DEMO_SAMPLE_ARTICLES.education;
+    // Fallback to sample article for requested category on error
+    const fallback = DEMO_SAMPLE_ARTICLES[category] || DEMO_SAMPLE_ARTICLES.education;
     return NextResponse.json(
-      { success: false, error: message, fallbackArticle: fallback },
-      { status: 500 }
+      { success: true, article: fallback, source: "demo", notice: message },
+      { status: 200 }
     );
   }
 }
@@ -76,23 +77,23 @@ export async function POST(request: NextRequest) {
     } catch (apiError: unknown) {
       const errMsg = apiError instanceof Error ? apiError.message : String(apiError);
       
-      // If missing API key and no server key, return sample with explanation
-      if (errMsg.includes("MISSING_GEMINI_API_KEY")) {
-        const sample = DEMO_SAMPLE_ARTICLES[category] || DEMO_SAMPLE_ARTICLES.education;
-        return NextResponse.json({
-          success: true,
-          article: sample,
-          source: "demo",
-          notice: "กรุณาระบุ Gemini API Key ในเมนูตั้งค่า เพื่อดึงและแปลงข่าวสารสดใหม่",
-        });
-      }
-      throw apiError;
+      const sample = DEMO_SAMPLE_ARTICLES[category] || DEMO_SAMPLE_ARTICLES.education;
+      const isMissingKey = errMsg.includes("MISSING_GEMINI_API_KEY");
+      return NextResponse.json({
+        success: true,
+        article: sample,
+        source: "demo",
+        notice: isMissingKey
+          ? "กรุณาระบุ Gemini API Key ในเมนูตั้งค่า เพื่อดึงและแปลงข่าวสารสดใหม่"
+          : `กำลังแสดงบทความคุณภาพสำหรับหมวดนี้ (${errMsg})`,
+      });
     }
 
     return NextResponse.json({ success: true, article: adaptedArticle, source: "live" });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการประมวลผลข่าว";
     console.error("[API daily-news POST Error]:", error);
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const fallback = DEMO_SAMPLE_ARTICLES.education;
+    return NextResponse.json({ success: true, article: fallback, source: "demo", notice: message });
   }
 }

@@ -20,6 +20,7 @@ import { saveVocabItem } from "@/lib/storage/vocabStorage";
 
 interface InteractiveReaderProps {
   article: DailyArticle;
+  selectedCategory?: "education" | "technology" | "environment";
   onSelectCategory: (category: "education" | "technology" | "environment") => void;
   onRefresh: () => void;
   isLoading: boolean;
@@ -28,6 +29,7 @@ interface InteractiveReaderProps {
 
 export function InteractiveReader({
   article,
+  selectedCategory,
   onSelectCategory,
   onRefresh,
   isLoading,
@@ -39,19 +41,43 @@ export function InteractiveReader({
   const [savedAllSuccess, setSavedAllSuccess] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
 
+  // Active category: user selection has priority over article metadata
+  const currentCategory = selectedCategory || article.category;
+
   // Normalize vocab list for quick matching
   const vocabMap = new Map<string, TargetVocabulary>();
   article.keyVocabulary?.forEach((v) => {
     vocabMap.set(v.word.toLowerCase(), v);
   });
 
+  const findMatchedVocab = (cleanWord: string): TargetVocabulary | undefined => {
+    if (vocabMap.has(cleanWord)) return vocabMap.get(cleanWord);
+    // Check inflections (plural -s, -es, past -ed, participle -ing)
+    if (cleanWord.endsWith("s") && vocabMap.has(cleanWord.slice(0, -1))) {
+      return vocabMap.get(cleanWord.slice(0, -1));
+    }
+    if (cleanWord.endsWith("es") && vocabMap.has(cleanWord.slice(0, -2))) {
+      return vocabMap.get(cleanWord.slice(0, -2));
+    }
+    if (cleanWord.endsWith("ed")) {
+      const base = cleanWord.slice(0, -2);
+      if (vocabMap.has(base)) return vocabMap.get(base);
+      if (vocabMap.has(cleanWord.slice(0, -1))) return vocabMap.get(cleanWord.slice(0, -1));
+    }
+    if (cleanWord.endsWith("ing")) {
+      const base = cleanWord.slice(0, -3);
+      if (vocabMap.has(base)) return vocabMap.get(base);
+      if (vocabMap.has(base + "e")) return vocabMap.get(base + "e");
+    }
+    return undefined;
+  };
+
   const handleWordClick = (rawWord: string) => {
-    // Strip punctuation for matching
     const cleanWord = rawWord.replace(/^[^\w]+|[^\w]+$/g, "").toLowerCase();
     if (!cleanWord || cleanWord.length < 2) return;
 
     setSelectedWord(cleanWord);
-    setSelectedVocab(vocabMap.get(cleanWord));
+    setSelectedVocab(findMatchedVocab(cleanWord));
   };
 
   const handleSaveAllVocab = () => {
@@ -90,7 +116,7 @@ export function InteractiveReader({
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
               className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                article.category === cat.id
+                currentCategory === cat.id
                   ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
@@ -167,7 +193,7 @@ export function InteractiveReader({
 
         {article.paragraphs.map((paragraph, pIdx) => {
           const isActive = activeParagraphIndex === pIdx;
-          const words = paragraph.split(/(\s+)/); // Preserve spaces
+          const words = paragraph.split(/(\s+)/);
 
           return (
             <p
@@ -184,14 +210,14 @@ export function InteractiveReader({
                 }
 
                 const cleanWord = chunk.replace(/^[^\w]+|[^\w]+$/g, "").toLowerCase();
-                const isKeyVocab = vocabMap.has(cleanWord);
+                const matched = findMatchedVocab(cleanWord);
 
                 return (
                   <span
                     key={wIdx}
                     onClick={() => handleWordClick(chunk)}
                     className={`cursor-pointer transition-all inline-block rounded px-0.5 ${
-                      isKeyVocab
+                      matched
                         ? "text-blue-300 font-medium underline decoration-blue-500/60 decoration-dashed underline-offset-4 hover:bg-blue-500/20 hover:text-white"
                         : "hover:bg-slate-800 hover:text-white"
                     }`}

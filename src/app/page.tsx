@@ -120,7 +120,11 @@ export default function DailyReaderPage() {
       ) : article ? (
         <InteractiveReader
           article={article}
-          onSelectCategory={(cat) => setCategory(cat)}
+          selectedCategory={category}
+          onSelectCategory={(cat) => {
+            setCategory(cat);
+            fetchArticle(cat, false);
+          }}
           onRefresh={() => fetchArticle(category, true)}
           isLoading={isLoading}
           notice={errorNotice || undefined}
