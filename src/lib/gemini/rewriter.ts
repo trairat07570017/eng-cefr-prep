@@ -33,7 +33,10 @@ Requirements:
      * definitionEn: clear, concise English definition
      * exampleSentence: a clear example sentence showing contextual usage
      * cefrLevel: "B1", "B2", or "C1"
-4. Comprehension Questions (2 questions):
+4. Full Thai Translation:
+   - Provide "titleTh": a natural, engaging Thai translation of the title.
+   - Provide "paragraphsTh": an array of accurate, natural Thai translations for each corresponding paragraph in paragraphs array.
+5. Comprehension Questions (2 questions):
    - Question 1: Main idea or inference question
    - Question 2: Detail or vocabulary-in-context question
    - Provide 4 multiple choice options per question, the correct 0-based index, and an explanation in Thai.
@@ -41,10 +44,16 @@ Requirements:
 Return ONLY a valid JSON object with this exact structure (no markdown formatting, no code block backticks):
 {
   "title": "Adapted English Title",
+  "titleTh": "หัวข้อข่าวภาษาไทยที่กระชับและสละสลวย",
   "paragraphs": [
-    "First paragraph text...",
-    "Second paragraph text...",
-    "Third paragraph text..."
+    "First paragraph text in English...",
+    "Second paragraph text in English...",
+    "Third paragraph text in English..."
+  ],
+  "paragraphsTh": [
+    "คำแปลภาษาไทยของย่อหน้าที่หนึ่งอย่างเป็นธรรมชาติและถูกต้องตามบริบท...",
+    "คำแปลภาษาไทยของย่อหน้าที่สอง...",
+    "คำแปลภาษาไทยของย่อหน้าที่สาม..."
   ],
   "keyVocabulary": [
     {
@@ -78,7 +87,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown formattin
   const responseText = response.text || "";
   let parsedData: {
     title: string;
+    titleTh?: string;
     paragraphs: string[];
+    paragraphsTh?: string[];
     keyVocabulary: TargetVocabulary[];
     comprehensionQuestions: ComprehensionQuestion[];
   };
@@ -103,6 +114,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown formattin
   return {
     id: `article-${today}-${rawNews.category}`,
     title: parsedData.title,
+    titleTh: parsedData.titleTh,
     originalTitle: rawNews.title,
     source: rawNews.source,
     sourceUrl: rawNews.link,
@@ -112,6 +124,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown formattin
     wordCount,
     content,
     paragraphs: parsedData.paragraphs,
+    paragraphsTh: parsedData.paragraphsTh,
     keyVocabulary: parsedData.keyVocabulary || [],
     comprehensionQuestions: parsedData.comprehensionQuestions || [],
     isCached: false,

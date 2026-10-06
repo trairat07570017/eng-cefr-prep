@@ -8,6 +8,7 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
   education: {
     id: "sample-demo-education",
     title: "How Interactive Reading Technology Enhances Second Language Acquisition",
+    titleTh: "เทคโนโลยีการอ่านแบบโต้ตอบช่วยยกระดับการเรียนรู้ภาษาที่สองได้อย่างไร",
     originalTitle: "Technology in Language Learning: Global Studies Highlight Rapid Fluency Gains",
     source: "BBC News Education",
     sourceUrl: "https://www.bbc.com/news/education",
@@ -21,6 +22,12 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
       "Language instructors emphasize that sustained exposure to authentic texts allows students to encounter collocations and idiomatic expressions naturally. By engaging with interactive readers that provide immediate lexical support, learners can overcome cognitive hesitation and focus on thematic comprehension.",
       "Furthermore, cognitive scientists highlight the efficacy of spaced repetition systems in preventing the deterioration of newly acquired knowledge. When learners systematically review target vocabulary at expanding intervals, long-term memory retention increases by up to eighty percent.",
       "In conclusion, integrating daily digital reading with targeted vocabulary retention techniques empowers educators and students alike to achieve superior proficiency benchmarks, such as CEFR B2 and C1, with measurable consistency.",
+    ],
+    paragraphsTh: [
+      "การศึกษายุคใหม่กำลังก้าวผ่านการเปลี่ยนแปลงครั้งสำคัญผ่านการนำเครื่องมือการเรียนรู้เชิงโต้ตอบมาปรับใช้ งานวิจัยทางครุศาสตร์ล่าสุดชี้ชัดว่า ผู้เรียนภาษาที่สองสามารถซึมซับคำศัพท์ที่ซับซ้อนได้รวดเร็วกว่าเดิมอย่างมีนัยสำคัญ เมื่อได้สัมผัสกับบทความอ่านรายวันขนาดพอเหมาะที่อิงตามบริบทจริง แทนที่จะใช้วิธีการท่องจำแบบเดิมๆ",
+      "ผู้สอนภาษาเน้นย้ำว่า การได้สัมผัสกับบทความจริงจากเจ้าของภาษาอย่างต่อเนื่อง ช่วยให้นักเรียนได้พบเห็นการใช้วลีที่มักใช้ร่วมกัน (collocation) และสำนวนต่างๆ อย่างเป็นธรรมชาติ การมีผู้นำทางการอ่านที่คอยให้คำอธิบายศัพท์ได้ในทันที ทำให้ผู้เรียนก้าวข้ามความลังเลในการทำความเข้าใจ และมุ่งเน้นไปที่การจับใจความหลักของเรื่องได้ดียิ่งขึ้น",
+      "นอกจากนี้ นักวิทยาศาสตร์ด้านพุทธิปัญญายังเน้นย้ำถึงประสิทธิภาพของระบบทบทวนแบบเว้นระยะ (Spaced Repetition System) ในการป้องกันการลืมเลือนความรู้ที่เพิ่งได้รับมาใหม่ เมื่อผู้เรียนทบทวนคำศัพท์เป้าหมายอย่างเป็นระบบตามช่วงเวลาที่ขยายออกไป ความคงทนของความจำระยะยาวจะเพิ่มขึ้นสูงถึง 80 เปอร์เซ็นต์",
+      "สรุปได้ว่า การบูรณาการการอ่านสื่อดิจิทัลเป็นประจำทุกวันควบคู่กับเทคนิคการจำคำศัพท์อย่างตรงจุด ช่วยส่งเสริมให้ทั้งครูผู้สอนและนักเรียนสามารถบรรลุเป้าหมายความเชี่ยวชาญระดับสูง เช่น CEFR B2 และ C1 ได้อย่างวัดผลได้อย่างแท้จริง",
     ],
     keyVocabulary: [
       {
@@ -126,6 +133,7 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
   technology: {
     id: "sample-demo-technology",
     title: "How Artificial Intelligence and Automation Are Reshaping the Modern Workplace",
+    titleTh: "ปัญญาประดิษฐ์และระบบอัตโนมัติกำลังพลิกโฉมสถานที่ทำงานยุคใหม่อย่างไร",
     originalTitle: "Workplace Evolution: AI Collaborators and the Need for Reskilling",
     source: "BBC News Technology",
     sourceUrl: "https://www.bbc.com/news/technology",
@@ -139,6 +147,12 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
       "Industry analysts indicate that routine operational tasks, such as data tabulation and clerical correspondence, are becoming automated at an unprecedented rate. Consequently, employees must develop adaptable skill sets focused on critical thinking, creative problem-solving, and emotional intelligence—attributes that algorithms cannot replicate.",
       "Moreover, educational institutions and corporate training programs face an urgent imperative to facilitate digital literacy initiatives. By equipping individuals with foundational programming and data analytics competencies, organizations can cultivate an agile workforce capable of thriving alongside autonomous tools.",
       "Ultimately, embracing technological innovation requires a proactive mindset. Professionals who continuously refine their digital expertise will secure lucrative opportunities in the emerging global knowledge economy.",
+    ],
+    paragraphsTh: [
+      "การเร่งตัวอย่างรวดเร็วของปัญญาประดิษฐ์ (AI) และการเรียนรู้ของเครื่อง (Machine Learning) กำลังสร้างความเปลี่ยนแปลงอย่างลึกซึ้งต่อภาคส่วนการจ้างงานแบบดั้งเดิม แทนที่จะทำให้แรงงานมนุษย์ตกงานอย่างสิ้นเชิง ระบบเทคโนโลยีร่วมสมัยกลับทำหน้าที่เป็นผู้ช่วยร่วมขับเคลื่อนที่ช่วยเพิ่มผลิตภาพและประสิทธิภาพของกำลังคนมากขึ้นเรื่อยๆ",
+      "นักวิเคราะห์ในภาคอุตสาหกรรมชี้ว่า งานปฏิบัติการประจำวัน เช่น การจัดตารางข้อมูลและการร่างจดหมายธุรการ กำลังถูกแปลงเป็นระบบอัตโนมัติในอัตราที่ไม่เคยปรากฏมาก่อน ด้วยเหตุนี้ พนักงานจึงจำเป็นต้องพัฒนาชุดทักษะที่ยืดหยุ่น โดยเน้นการคิดเชิงวิพากษ์ การแก้ปัญหาอย่างสร้างสรรค์ และความฉลาดทางอารมณ์ ซึ่งเป็นคุณลักษณะที่อัลกอริทึมไม่สามารถลอกเลียนแบบได้",
+      "ยิ่งไปกว่านั้น สถาบันการศึกษาและหลักสูตรฝึกอบรมขององค์กรกำลังเผชิญกับภารกิจเร่งด่วนในการสนับสนุนโครงการเสริมสร้างทักษะความฉลาดรู้ทางดิจิทัล การติดอาวุธให้บุคลากรด้วยทักษะการเขียนโปรแกรมพื้นฐานและการวิเคราะห์ข้อมูล จะช่วยให้องค์กรสามารถเพาะบ่มกำลังคนที่มีความคล่องตัวและพร้อมเติบโตเคียงคู่กับเครื่องมืออัตโนมัติได้",
+      "ท้ายที่สุดแล้ว การเปิดรับนวัตกรรมทางเทคโนโลยีจำเป็นต้องอาศัยกรอบความคิดเชิงรุก มืออาชีพที่ขัดเกลาและยกระดับความเชี่ยวชาญทางดิจิทัลของตนอย่างต่อเนื่อง จะสามารถคว้าโอกาสสร้างรายได้อันงดงามในระบบเศรษฐกิจฐานความรู้ระดับโลกที่กำลังเติบโตนี้ได้",
     ],
     keyVocabulary: [
       {
@@ -226,6 +240,7 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
   environment: {
     id: "sample-demo-environment",
     title: "Global Reforestation and Sustainable Energy Initiatives Accelerate Biodiversity Recovery",
+    titleTh: "โครงการปลูกป่าระดับโลกและพลังงานหมุนเวียนช่วยเร่งการฟื้นตัวของความหลากหลายทางชีวภาพ",
     originalTitle: "Conservation Milestones: Restoring Ecosystems Through Community Action",
     source: "BBC Science & Environment",
     sourceUrl: "https://www.bbc.com/news/science_and_environment",
@@ -239,6 +254,12 @@ export const DEMO_SAMPLE_ARTICLES: Record<string, DailyArticle> = {
       "Environmental researchers highlight that community stewardship is indispensable for preserving fragile ecosystems. When indigenous and local populations participate directly in forest management, illegal logging decreases sharply, allowing wildlife corridors to flourish once again.",
       "In tandem with forestry preservation, the transition toward solar and wind infrastructure diminishes toxic carbon emissions that threaten aquatic biomes. Cleaner air and purified watershed basins directly bolster agricultural productivity and safeguard potable water reserves.",
       "While substantial climate hurdles persist, these positive environmental trajectories substantiate that strategic policy interventions and dedicated grassroots mobilization can successfully revitalize our planet’s natural equilibrium.",
+    ],
+    paragraphsTh: [
+      "นักวิทยาศาสตร์ด้านการอนุรักษ์ระดับนานาชาติรายงานการฟื้นตัวของประชากรสัตว์ใกล้สูญพันธุ์ที่วัดผลได้ในถิ่นที่อยู่อาศัยที่ได้รับการฟื้นฟูหลายแห่ง การเฝ้าตรวจตราด้วยภาพถ่ายดาวเทียมที่ครอบคลุมยืนยันว่า แคมเปญการปลูกป่าร่วมกันของนานาประเทศ ควบคู่กับการนำพลังงานหมุนเวียนมาใช้ กำลังช่วยพลิกฟื้นความเสื่อมโทรมของระบบนิเวศตลอดหลายทศวรรษที่ผ่านมา",
+      "นักวิจัยด้านสิ่งแวดล้อมเน้นย้ำว่า การมีส่วนร่วมดูแลของชุมชนท้องถิ่นเป็นสิ่งจำเป็นอย่างยิ่งในการปกป้องระบบนิเวศที่เปราะบาง เมื่อชนพื้นเมืองและประชากรในพื้นที่เข้ามามีส่วนร่วมโดยตรงในการจัดการป่าไม้ การลักลอบตัดไม้ทำลายป่าจะลดลงอย่างเห็นได้ชัด ทำให้เส้นทางสัญจรของสัตว์ป่ากลับมาอุดมสมบูรณ์อีกครั้ง",
+      "ควบคู่ไปกับการอนุรักษ์ผืนป่า การเปลี่ยนผ่านสู่โครงสร้างพื้นฐานพลังงานแสงอาทิตย์และพลังงานลมช่วยลดการปล่อยคาร์บอนที่เป็นพิษซึ่งคุกคามระบบนิเวศทางน้ำ อากาศที่บริสุทธิ์ขึ้นและลุ่มน้ำที่สะอาดขึ้นส่งผลดีโดยตรงต่อผลผลิตทางการเกษตรและช่วยปกป้องแหล่งน้ำดื่มที่จำเป็น",
+      "แม้ว่าความท้าทายด้านสภาพภูมิอากาศที่สำคัญจะยังคงอยู่ แต่แนวโน้มด้านสิ่งแวดล้อมเชิงบวกเหล่านี้เป็นเครื่องพิสูจน์ว่า มาตรการเชิงนโยบายเชิงยุทธศาสตร์และการขับเคลื่อนของภาคประชาชนในระดับรากหญ้า สามารถช่วยฟื้นฟูความสมดุลตามธรรมชาติของโลกเราได้อย่างแท้จริง",
     ],
     keyVocabulary: [
       {

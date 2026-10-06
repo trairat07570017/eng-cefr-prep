@@ -13,8 +13,12 @@ A service component leveraging the Gemini API to adapt raw RSS news feeds into C
 _Avoid_: News summarizer, translator
 
 **Interactive Reader**:
-An article viewer that enables word-level selection to instantly inspect context-aware definitions, trigger text-to-speech audio, and save target words directly to the user's Vocabulary Bank.
+A unified article viewer that enables word-level selection to instantly inspect context-aware definitions, trigger text-to-speech audio, and save target words directly to the user's Vocabulary Bank.
 _Avoid_: Text viewer, reader mode
+
+**Bilingual Paragraph View**:
+A dual-language reading feature in the Interactive Reader that displays clear, natural Thai translations directly underneath each English paragraph on toggle, enabling learners to cross-examine sentence structure, collocations, and comprehension against the CEFR target text without abandoning English reading immersion.
+_Avoid_: Full page translate, Thai-only mode, machine translate
 
 **Vocabulary Bank**:
 A personalized, persistent collection of vocabulary extracted from articles and practice sessions, synced across devices for spaced repetition and mastery.

@@ -15,6 +15,7 @@ import {
   BookOpen,
   Volume2,
   CheckCircle,
+  Languages,
 } from "lucide-react";
 import { saveVocabItem } from "@/lib/storage/vocabStorage";
 
@@ -40,6 +41,7 @@ export function InteractiveReader({
   const [selectedVocab, setSelectedVocab] = useState<TargetVocabulary | undefined>(undefined);
   const [savedAllSuccess, setSavedAllSuccess] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
+  const [showBilingual, setShowBilingual] = useState(false);
 
   // Active category: user selection has priority over article metadata
   const currentCategory = selectedCategory || article.category;
@@ -126,15 +128,30 @@ export function InteractiveReader({
           ))}
         </div>
 
-        <button
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
-          title="ดึงข่าวใหม่"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-400" : ""}`} />
-          <span>{isLoading ? "กำลังประมวลผล..." : "สลับข่าวใหม่"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowBilingual(!showBilingual)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+              showBilingual
+                ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20"
+                : "bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700"
+            }`}
+            title="เปิด/ปิด คำแปลภาษาไทยประกบคู่ใต้แต่ละย่อหน้า"
+          >
+            <Languages className={`w-3.5 h-3.5 ${showBilingual ? "text-white" : "text-indigo-400"}`} />
+            <span>{showBilingual ? "ซ่อนคำแปลไทย" : "แปลข่าวไทย (ประกบคู่)"}</span>
+          </button>
+
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+            title="ดึงข่าวใหม่"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-400" : ""}`} />
+            <span>{isLoading ? "กำลังประมวลผล..." : "สลับข่าวใหม่"}</span>
+          </button>
+        </div>
       </div>
 
       {notice && (
@@ -173,6 +190,12 @@ export function InteractiveReader({
           {article.title}
         </h1>
 
+        {showBilingual && article.titleTh && (
+          <h2 className="text-lg sm:text-xl font-bold text-indigo-300 leading-snug animate-fadeIn flex items-center gap-2">
+            <span>🇹🇭 {article.titleTh}</span>
+          </h2>
+        )}
+
         <p className="text-xs sm:text-sm text-slate-400 italic">
           พาดหัวข่าวต้นฉบับ: &ldquo;{article.originalTitle}&rdquo;
         </p>
@@ -186,9 +209,16 @@ export function InteractiveReader({
 
       {/* Interactive Article Reading Body */}
       <article className="p-6 sm:p-8 rounded-3xl bg-slate-900/40 border border-slate-800/80 shadow-xl space-y-6 text-base sm:text-lg leading-relaxed text-slate-200">
-        <div className="text-xs text-slate-500 flex items-center gap-2 pb-2 border-b border-slate-800/60 select-none">
-          <BookOpen className="w-3.5 h-3.5 text-blue-400" />
-          <span>แตะหรือคลิกที่คำศัพท์ใดก็ได้ในบทความเพื่อดูคำแปลและความหมายทันที</span>
+        <div className="text-xs text-slate-500 flex items-center justify-between pb-2 border-b border-slate-800/60 select-none">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+            <span>แตะหรือคลิกที่คำศัพท์ใดก็ได้ในบทความเพื่อดูคำแปลและความหมายทันที</span>
+          </div>
+          {showBilingual && (
+            <span className="text-[11px] text-indigo-400 font-medium">
+              กำลังแสดงคำแปลไทยประกบคู่
+            </span>
+          )}
         </div>
 
         {article.paragraphs.map((paragraph, pIdx) => {
@@ -196,37 +226,47 @@ export function InteractiveReader({
           const words = paragraph.split(/(\s+)/);
 
           return (
-            <p
-              key={pIdx}
-              className={`p-3 rounded-2xl transition-all duration-300 ${
-                isActive
-                  ? "bg-blue-600/10 border-l-4 border-blue-500 pl-4 text-white shadow-sm"
-                  : "hover:bg-slate-900/30"
-              }`}
-            >
-              {words.map((chunk, wIdx) => {
-                if (/^\s+$/.test(chunk)) {
-                  return <span key={wIdx}>{chunk}</span>;
-                }
+            <div key={pIdx} className="space-y-2">
+              <p
+                className={`p-3 rounded-2xl transition-all duration-300 ${
+                  isActive
+                    ? "bg-blue-600/10 border-l-4 border-blue-500 pl-4 text-white shadow-sm"
+                    : "hover:bg-slate-900/30"
+                }`}
+              >
+                {words.map((chunk, wIdx) => {
+                  if (/^\s+$/.test(chunk)) {
+                    return <span key={wIdx}>{chunk}</span>;
+                  }
 
-                const cleanWord = chunk.replace(/^[^\w]+|[^\w]+$/g, "").toLowerCase();
-                const matched = findMatchedVocab(cleanWord);
+                  const cleanWord = chunk.replace(/^[^\w]+|[^\w]+$/g, "").toLowerCase();
+                  const matched = findMatchedVocab(cleanWord);
 
-                return (
-                  <span
-                    key={wIdx}
-                    onClick={() => handleWordClick(chunk)}
-                    className={`cursor-pointer transition-all inline-block rounded px-0.5 ${
-                      matched
-                        ? "text-blue-300 font-medium underline decoration-blue-500/60 decoration-dashed underline-offset-4 hover:bg-blue-500/20 hover:text-white"
-                        : "hover:bg-slate-800 hover:text-white"
-                    }`}
-                  >
-                    {chunk}
+                  return (
+                    <span
+                      key={wIdx}
+                      onClick={() => handleWordClick(chunk)}
+                      className={`cursor-pointer transition-all inline-block rounded px-0.5 ${
+                        matched
+                          ? "text-blue-300 font-medium underline decoration-blue-500/60 decoration-dashed underline-offset-4 hover:bg-blue-500/20 hover:text-white"
+                          : "hover:bg-slate-800 hover:text-white"
+                      }`}
+                    >
+                      {chunk}
+                    </span>
+                  );
+                })}
+              </p>
+
+              {showBilingual && article.paragraphsTh?.[pIdx] && (
+                <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-500/25 text-indigo-200 text-sm leading-relaxed animate-fadeIn">
+                  <span className="font-semibold text-indigo-400 block mb-1 text-[11px] uppercase tracking-wider select-none">
+                    🇹🇭 คำแปลไทย:
                   </span>
-                );
-              })}
-            </p>
+                  {article.paragraphsTh[pIdx]}
+                </div>
+              )}
+            </div>
           );
         })}
       </article>

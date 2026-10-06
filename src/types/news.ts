@@ -18,6 +18,7 @@ export interface ComprehensionQuestion {
 export interface DailyArticle {
   id: string;
   title: string;
+  titleTh?: string;
   originalTitle: string;
   source: string;
   sourceUrl?: string;
@@ -27,6 +28,7 @@ export interface DailyArticle {
   wordCount: number;
   content: string; // adapted text (250-350 words)
   paragraphs: string[];
+  paragraphsTh?: string[];
   keyVocabulary: TargetVocabulary[];
   comprehensionQuestions?: ComprehensionQuestion[];
   isCached?: boolean;
