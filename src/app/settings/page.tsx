@@ -18,8 +18,12 @@ import {
   Eye,
   EyeOff,
   Radio,
+  RefreshCw,
+  Copy,
+  Code,
 } from "lucide-react";
 import { getSavedVocabItems } from "@/lib/storage/vocabStorage";
+import { syncVocabWithCloud } from "@/lib/storage/supabaseSync";
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
@@ -35,6 +39,10 @@ export default function SettingsPage() {
 
   const [isTestingSupabase, setIsTestingSupabase] = useState(false);
   const [supabaseTestStatus, setSupabaseTestStatus] = useState<{ success: boolean; msg: string } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success: boolean; msg: string } | null>(null);
+  const [showSql, setShowSql] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,6 +127,45 @@ export default function SettingsPage() {
     } finally {
       setIsTestingSupabase(false);
     }
+  };
+
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await syncVocabWithCloud();
+      setSyncResult({ success: res.success, msg: res.message });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSyncResult({ success: false, msg: `เกิดข้อผิดพลาด: ${msg}` });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const sqlSchemaScript = `CREATE TABLE IF NOT EXISTS vocab_bank (
+  id TEXT PRIMARY KEY,
+  word TEXT NOT NULL,
+  part_of_speech TEXT,
+  phonetic TEXT,
+  definition_th TEXT,
+  definition_en TEXT,
+  example_sentence TEXT,
+  cefr_level TEXT,
+  review_stage INT DEFAULT 1,
+  next_review_date TEXT,
+  times_reviewed INT DEFAULT 0,
+  source_article_title TEXT,
+  saved_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE vocab_bank ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public access" ON vocab_bank FOR ALL USING (true) WITH CHECK (true);`;
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(sqlSchemaScript);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 2500);
   };
 
   const handleExportData = () => {
@@ -405,6 +452,67 @@ export default function SettingsPage() {
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               )}
               <span>{supabaseTestStatus.msg}</span>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={handleSyncNow}
+              disabled={isSyncing || !supabaseUrl || !supabaseKey}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-xs text-white font-medium transition-colors"
+            >
+              {isSyncing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              <span>{isSyncing ? "กำลังซิงค์..." : "ซิงค์คำศัพท์ตอนนี้ (Sync Now)"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowSql(!showSql)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors"
+            >
+              <Code className="w-3.5 h-3.5 text-blue-400" />
+              <span>{showSql ? "ซ่อนคำสั่ง SQL" : "ดูคำสั่ง SQL สำหรับ Supabase"}</span>
+            </button>
+          </div>
+
+          {syncResult && (
+            <div
+              className={`p-3 rounded-xl text-xs flex items-center gap-2 border ${
+                syncResult.success
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                  : "bg-rose-500/10 border-rose-500/20 text-rose-300"
+              }`}
+            >
+              {syncResult.success ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              )}
+              <span>{syncResult.msg}</span>
+            </div>
+          )}
+
+          {showSql && (
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 mt-2">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>คัดลอกคำสั่งนี้ไปรันในเมนู SQL Editor ของ Supabase:</span>
+                <button
+                  type="button"
+                  onClick={handleCopySql}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>{copiedSql ? "คัดลอกแล้ว!" : "คัดลอก SQL"}</span>
+                </button>
+              </div>
+              <pre className="p-3 rounded-xl bg-slate-900 text-xs font-mono text-emerald-300 overflow-x-auto whitespace-pre">
+                {sqlSchemaScript}
+              </pre>
             </div>
           )}
         </div>
